@@ -1,3 +1,5 @@
+#/usr/bin/python
+
 import os
 import sys
 import re
@@ -20,10 +22,13 @@ def extract_artifact_id_and_version(url):
         return {"artifact": ARTIFACT_ID, "version": VERSION}
     exit(1)
 
-def execute_maven_command(url, data):
+def execute_maven_install_command(url, data):
     maven_install_command = "mvn install:install-file -DgroupId=io.nirahtech -DartifactId="+data["artifact"]+" -Dversion="+data["version"]+" -Dfile="+url+" -Dpackaging=jar -DgeneratePom=true -DlocalRepositoryPath=.  -DcreateChecksum=true"
     os.system(maven_install_command)
 
+def execute_maven_build_command():
+    maven_install_command = "mvn clean install -U"
+    os.system(maven_install_command)
 
 def process():
     ARGUMENTS = sys.argv
@@ -31,11 +36,11 @@ def process():
         # Manual
         URL = str(ARGUMENTS[1])
         data = extract_artifact_id_and_version(URL)
-        execute_maven_command(URL, data)
+        execute_maven_install_command(URL, data)
         return
 
     # Automatic: PROS-WORKSTATION-WINDOWS
-    workspace_root_base = "C:\\Users\\nmetivier\\Documents\\Programmation\\NIRAHTECH\\"
+    # workspace_root_base = "C:\\Users\\nmetivier\\Documents\\Programmation\\NIRAHTECH\\"
     
     # Automatic: PROS-WORKSTATION-LINUX
     # workspace_root_base = "/mnt/c/Users/nmetivier/Documents/Programmation/NIRAHTECH/"
@@ -47,18 +52,19 @@ def process():
     # workspace_root_base = str(ARGUMENTS[1])
     
     # Automatic: NIRAH-LAPTOP-LINUX
-    # workspace_root_base = str(ARGUMENTS[1])
+    workspace_root_base = "/home/z4r045tr3/nirahtech-workspace/"
 
     workspace_root_base = workspace_root_base.replace("\\", "/").replace("//", "/").replace("//", "/")
     projects = os.listdir(workspace_root_base)
     for project in projects:
+        execute_maven_build_command()
         url = str(str(workspace_root_base) + str(project) + "/target/")
         if (os.path.exists(url) and os.path.isdir(url)):
             for potential_jar_file in os.listdir(url):
                 if (str(potential_jar_file).endswith(".jar")):
                     url = str(url + str(potential_jar_file))
                     data = extract_artifact_id_and_version(url)
-                    execute_maven_command(url, data)
+                    execute_maven_install_command(url, data)
 def main():
     process()
 
